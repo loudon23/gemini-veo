@@ -1,9 +1,10 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, VideoGenerationReferenceImage, VideoGenerationReferenceType } from "@google/genai";
 import dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
 import dateformat from 'dateformat';
 import mime from 'mime-types';
+import { glob } from 'glob'
 
 // .env 파일에서 환경변수 로드
 dotenv.config();
@@ -19,17 +20,30 @@ async function main() {
   const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
   // 프롬프트
-  const prompt = `캐릭터가 빠르게 달려가다가 넘어지는 영상으로 만들어`;
+  const prompt = `두 캐릭터가 달리기를 하다가, 파란색 두건을 쓴 캐릭터가 넘어지는 영상으로 만들어`;
 
-  // 자원으로 쓸 이미지 파일 경로 
-  const assetImage = 'assets/백호구.png';
+  // 자원으로 쓸 이미지 파일 경로
+  // 해당 폴더 아래의 모든 이미지를 자원으로 사용
+  const assetPath = 'assets/1';
 
-  // 로컬 이미지 파일을 읽어 Base64로 인코딩합니다.
-  const imagePath = path.join(assetImage);
-  const imageBytes = fs.readFileSync(imagePath).toString('base64');
-  const mimeType = mime.lookup(imagePath);
-  if (!mimeType) {
-    throw new Error("❌ 이미지의 MIME 타입을 확인할 수 없습니다.");
+  // 로컬 이미지 파일을 읽어 Base64로 인코딩 후 레퍼런스객체에 넣기
+  const referenceImages: VideoGenerationReferenceImage[] = [];
+  const assetFiles = await glob(`${assetPath}/*.png`);
+  for (let assetImage of assetFiles) {
+    const imagePath = path.join(assetImage);
+    const imageBytes = fs.readFileSync(imagePath).toString('base64');
+    const mimeType = mime.lookup(imagePath);
+    if (!mimeType) {
+      throw new Error("❌ 이미지의 MIME 타입을 확인할 수 없습니다.");
+    }
+
+    referenceImages.push({
+      image: {
+        imageBytes: imageBytes,
+        mimeType: mimeType,
+      },
+      referenceType: VideoGenerationReferenceType.ASSET,
+    });
   }
 
   // 이미지를 사용하여 Veo 3.1로 비디오를 생성합니다.
@@ -37,9 +51,8 @@ async function main() {
   let operation = await ai.models.generateVideos({
     model: MODEL,
     prompt: prompt,
-    image: {
-      imageBytes: imageBytes,
-      mimeType: mimeType,
+    config: {
+      referenceImages: referenceImages,
     },
   });
 

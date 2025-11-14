@@ -1,9 +1,9 @@
 node_modules/
 # assets 폴더 안의 모든 파일 무시, assets 폴더 자체와 특정 파일은 추적
-assets/
+assets/*
 !assets/.gitkeep
 # output 폴더 안의 모든 파일 무시, output 폴더 자체와 특정 파일은 추적
-output/
+output/*
 !output/.gitkeep
 package-lock.json
 .env

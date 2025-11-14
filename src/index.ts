@@ -77,7 +77,6 @@ async function main() {
   const saveFilename = `${dateformat(new Date(), "yyyymmdd_HHMMss")}.mp4`;
   const downloadPath = `${prefix}/${saveFilename}`;
 
-
   // 비디오를 다운로드
   // @see https://googleapis.github.io/js-genai/release_docs/classes/files.Files.html#download 
   ai.files.download({
